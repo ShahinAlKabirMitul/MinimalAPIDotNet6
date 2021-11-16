@@ -1,4 +1,12 @@
-var app = WebApplication.CreateBuilder(args).Build();
+using Microsoft.AspNetCore.Mvc;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<ItemRepository>();
+var app=builder.Build();
+app.MapGet("/items",([FromServices] ItemRepository item)=>
+{
+    return item.GetAll();
+});
 app.MapGet("/",()=> "Hello from minimal API");
 app.Run();
 
@@ -17,6 +25,7 @@ class ItemRepository{
     public Item GetById(int id)=> items[id];
     public void Add(Item item) => items.Add(item.id,item);
     public void Update(Item item)=> items[item.id] = item;
+    public void Delete (int id)=> items.Remove(id);
 }
 // var builder = WebApplication.CreateBuilder(args);
 
