@@ -1,7 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionStrings=builder.Configuration["ConnectionStrings:DefaultConnection"];
 builder.Services.AddSingleton<ItemRepository>();
+builder.Services.AddDbContext<ApiDbContext>( options=> options.UseSqlite(connectionStrings));
+
+
 var app=builder.Build();
 app.MapGet("/items",([FromServices] ItemRepository item)=>
 {
@@ -20,6 +25,26 @@ app.MapPost("/items",([FromServices] ItemRepository items,Item item)=>{
 app.MapGet("items/{id}",([FromServices] ItemRepository items,int id) =>{
     var item = items.GetById(id);
     return item == null ? Results.NotFound() : Results.Ok(item);
+});
+
+app.MapPut("items/{id}",([FromServices] ItemRepository items ,int id,Item item)=> {
+if (items.GetById(id) != null)
+    {
+        return Results.NotFound();
+    }
+    items.Update(item);
+   return Results.Ok();
+
+});
+
+app.MapDelete("items/{id}",([FromServices] ItemRepository items ,int id)=> {
+if (items.GetById(id) != null)
+    {
+        return Results.NotFound();
+    }
+    items.Delete(id);
+   return Results.Ok();
+
 });
 
 app.MapPut("items/{id}",([FromServices] ItemRepository items,int id,Item item) =>{
@@ -56,6 +81,14 @@ class ItemRepository{
     public void Add(Item item) => items.Add(item.id,item);
     public void Update(Item item)=> items[item.id] = item;
     public void Delete (int id)=> items.Remove(id);
+}
+
+class ApiDbContext : DbContext{
+    public DbSet<Item> Items { get; set; }
+    public ApiDbContext(DbContextOptions<ApiDbContext> options):base (options)
+    {
+        
+    }
 }
 // var builder = WebApplication.CreateBuilder(args);
 
